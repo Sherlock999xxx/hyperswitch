@@ -613,6 +613,7 @@ pub struct NuveiPaymentFlowRequest {
     pub merchant_id: Secret<String>,
     pub merchant_site_id: Secret<String>,
     pub client_request_id: String,
+    pub client_unique_id: String,
     pub amount: StringMajorUnit,
     pub currency: enums::Currency,
     pub related_transaction_id: Option<String>,
@@ -1993,6 +1994,7 @@ where
             currency,
             connector_auth_type: item.connector_auth_type.clone(),
             client_request_id: item.connector_request_reference_id.clone(),
+            client_unique_id: item.connector_request_reference_id.clone(),
             session_token: Secret::new(data.1),
             capture_method: item.request.get_capture_method(),
 
@@ -2227,6 +2229,7 @@ impl TryFrom<(&types::PaymentsCompleteAuthorizeRouterData, Secret<String>)>
             currency: item.request.currency,
             connector_auth_type: item.connector_auth_type.clone(),
             client_request_id: item.connector_request_reference_id.clone(),
+            client_unique_id: item.connector_request_reference_id.clone(),
             session_token: data.1,
             capture_method: item.request.capture_method,
             ..Default::default()
@@ -2263,6 +2266,7 @@ impl TryFrom<NuveiPaymentRequestData> for NuveiPaymentsRequest {
             merchant_id: merchant_id.clone(),
             merchant_site_id: merchant_site_id.clone(),
             client_request_id: Secret::new(client_request_id.clone()),
+            client_unique_id: client_request_id.clone(),
             time_stamp: time_stamp.clone(),
             session_token,
             transaction_type,
@@ -2298,11 +2302,13 @@ impl TryFrom<NuveiPaymentRequestData> for NuveiPaymentFlowRequest {
             merchant_id: merchant_id.to_owned(),
             merchant_site_id: merchant_site_id.to_owned(),
             client_request_id: client_request_id.clone(),
+            client_unique_id: client_request_id.clone(),
             time_stamp: time_stamp.clone(),
             checksum: Secret::new(encode_payload(&[
                 merchant_id.peek(),
                 merchant_site_id.peek(),
                 &client_request_id,
+                &client_request_id.clone(),
                 &request.amount.get_amount_as_string(),
                 &request.currency.to_string(),
                 &request.related_transaction_id.clone().unwrap_or_default(),
@@ -2322,6 +2328,7 @@ pub struct NuveiPaymentRequestData {
     pub currency: enums::Currency,
     pub related_transaction_id: Option<String>,
     pub client_request_id: String,
+    pub client_unique_id: String,
     pub connector_auth_type: ConnectorAuthType,
     pub session_token: Secret<String>,
     pub capture_method: Option<CaptureMethod>,
@@ -2332,6 +2339,7 @@ impl TryFrom<&types::PaymentsCaptureRouterData> for NuveiPaymentFlowRequest {
     fn try_from(item: &types::PaymentsCaptureRouterData) -> Result<Self, Self::Error> {
         Self::try_from(NuveiPaymentRequestData {
             client_request_id: item.connector_request_reference_id.clone(),
+            client_unique_id: item.connector_request_reference_id.clone(),
             connector_auth_type: item.connector_auth_type.clone(),
             amount: convert_amount(
                 NUVEI_AMOUNT_CONVERTOR,
@@ -2349,6 +2357,7 @@ impl TryFrom<&types::RefundExecuteRouterData> for NuveiPaymentFlowRequest {
     fn try_from(item: &types::RefundExecuteRouterData) -> Result<Self, Self::Error> {
         Self::try_from(NuveiPaymentRequestData {
             client_request_id: item.connector_request_reference_id.clone(),
+            client_unique_id: item.connector_request_reference_id.clone(),
             connector_auth_type: item.connector_auth_type.clone(),
             amount: convert_amount(
                 NUVEI_AMOUNT_CONVERTOR,
@@ -2452,6 +2461,7 @@ impl TryFrom<&types::PaymentsCancelRouterData> for NuveiPaymentFlowRequest {
     fn try_from(item: &types::PaymentsCancelRouterData) -> Result<Self, Self::Error> {
         Self::try_from(NuveiPaymentRequestData {
             client_request_id: item.connector_request_reference_id.clone(),
+            client_unique_id: item.connector_request_reference_id.clone(),
             connector_auth_type: item.connector_auth_type.clone(),
             amount: convert_amount(
                 NUVEI_AMOUNT_CONVERTOR,
